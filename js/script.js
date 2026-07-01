@@ -39,8 +39,11 @@ const storageKeys = {
   wishlist: "deskdrop-wishlist",
   discount: "deskdrop-discount",
   theme: "deskdrop-theme",
-  countdown: "deskdrop-countdown-target"
+  countdown: "deskdrop-countdown-target",
+  countdownVersion: "deskdrop-countdown-version"
 };
+
+const countdownVersion = "30-day-drop";
 
 const currency = new Intl.NumberFormat("en-PK", {
   style: "currency",
@@ -322,9 +325,11 @@ function updatePriceLabel() {
 
 function startCountdown() {
   let target = localStorage.getItem(storageKeys.countdown);
-  if (!target || Number.isNaN(Date.parse(target)) || new Date(target) <= new Date()) {
-    target = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 14 * 60 * 60 * 1000 + 37 * 60 * 1000).toISOString();
+  const savedVersion = localStorage.getItem(storageKeys.countdownVersion);
+  if (!target || savedVersion !== countdownVersion || Number.isNaN(Date.parse(target)) || new Date(target) <= new Date()) {
+    target = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     localStorage.setItem(storageKeys.countdown, target);
+    localStorage.setItem(storageKeys.countdownVersion, countdownVersion);
   }
 
   const update = () => {
