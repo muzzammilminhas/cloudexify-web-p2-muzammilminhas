@@ -34,7 +34,7 @@ Interactive limited-drop e-commerce storefront for CloudExify Full Stack Web Dev
 ## Links
 
 - Repository: https://github.com/muzzammilminhas/cloudexify-web-p2-muzammilminhas
-- Live Vercel Link: Pending deployment
+- Live Vercel Link: https://cloudexify-web-p2-muzammilminhas.vercel.app
 
 ## Project Structure
 
