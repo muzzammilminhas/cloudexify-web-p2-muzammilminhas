@@ -27,6 +27,7 @@ const els = {
   discountCode: document.getElementById("discountCode"),
   applyDiscount: document.getElementById("applyDiscount"),
   themeToggle: document.getElementById("themeToggle"),
+  bootLoader: document.getElementById("bootLoader"),
   resetFilters: document.getElementById("resetFilters"),
   clearCart: document.getElementById("clearCart"),
   toastBody: document.getElementById("toastBody"),
@@ -161,17 +162,17 @@ function renderProducts() {
   els.emptyState.classList.toggle("d-none", products.length > 0);
   renderCategoryList(els.categoryFilter.value);
 
-  els.productGrid.innerHTML = products.map((product) => {
+  els.productGrid.innerHTML = products.map((product, index) => {
     const available = getAvailableStock(product);
     const soldOut = available === 0;
     const lowStock = available > 0 && available <= 3;
     const wished = wishlist.includes(product.id);
 
     return `
-      <article class="col-sm-6 col-xl-4 col-xxl-3">
+      <article class="col-sm-6 col-xl-4 col-xxl-3 product-reveal" style="--card-delay: ${Math.min(index * 70, 420)}ms">
         <div class="product-card h-100">
           <button class="wish-button ${wished ? "active" : ""}" type="button" data-wishlist="${product.id}" aria-label="${wished ? "Remove from" : "Add to"} wishlist">
-            ${wished ? "♥" : "♡"}
+            ${wished ? "&#9829;" : "&#9825;"}
           </button>
           <button class="product-media" type="button" data-open-product="${product.id}" aria-label="Open details for ${product.name}">
             <img src="${product.image}" alt="${product.name}">
@@ -186,7 +187,7 @@ function renderProducts() {
             </div>
             <div class="product-meta">
               <span>${formatPrice(product.price)}</span>
-              <span>${product.rating.toFixed(1)} ★</span>
+              <span>${product.rating.toFixed(1)} &#9733;</span>
             </div>
             <button class="btn btn-outline-info w-100" type="button" data-add="${product.id}" ${soldOut ? "disabled" : ""}>
               ${soldOut ? "Sold out" : "Add to cart"}
@@ -214,13 +215,13 @@ function renderCart() {
           <h3>${product.name}</h3>
           <p>${product.colorway}</p>
           <div class="qty-control" aria-label="Quantity for ${product.name}">
-            <button type="button" data-dec="${product.id}" aria-label="Decrease quantity">−</button>
+            <button type="button" data-dec="${product.id}" aria-label="Decrease quantity">&minus;</button>
             <span>${item.qty}</span>
             <button type="button" data-inc="${product.id}" ${available <= 0 ? "disabled" : ""} aria-label="Increase quantity">+</button>
           </div>
         </div>
         <div class="cart-item-end">
-          <button type="button" data-remove="${product.id}" aria-label="Remove ${product.name}">×</button>
+          <button type="button" data-remove="${product.id}" aria-label="Remove ${product.name}">&times;</button>
           <strong>${formatPrice(product.price * item.qty)}</strong>
         </div>
       </article>`;
@@ -354,6 +355,45 @@ function initTheme() {
   document.documentElement.dataset.theme = theme;
 }
 
+function initExperience() {
+  const finishBoot = () => document.body.classList.add("is-loaded");
+  if (document.readyState === "complete") {
+    setTimeout(finishBoot, 450);
+  } else {
+    window.addEventListener("load", () => setTimeout(finishBoot, 450), { once: true });
+    setTimeout(finishBoot, 1600);
+  }
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.16 });
+
+  document.querySelectorAll(".reveal").forEach((item) => revealObserver.observe(item));
+
+  els.productGrid.addEventListener("pointermove", (event) => {
+    const card = event.target.closest(".product-card");
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    card.style.setProperty("--mx", x.toFixed(3));
+    card.style.setProperty("--my", y.toFixed(3));
+  });
+
+  els.productGrid.addEventListener("pointerout", (event) => {
+    const card = event.target.closest(".product-card");
+    if (card && !card.contains(event.relatedTarget)) {
+      card.style.removeProperty("--mx");
+      card.style.removeProperty("--my");
+    }
+  });
+}
+
 function bindEvents() {
   ["input", "change"].forEach((eventName) => {
     [els.searchInput, els.categoryFilter, els.priceFilter, els.stockFilter, els.sortFilter].forEach((control) => {
@@ -410,6 +450,10 @@ function bindEvents() {
     }
   });
 
+  document.querySelectorAll("#productModal [data-bs-dismiss='modal']").forEach((button) => {
+    button.addEventListener("click", () => productModal.hide());
+  });
+
   els.applyDiscount.addEventListener("click", applyDiscountCode);
   els.resetFilters.addEventListener("click", resetFilters);
 
@@ -450,6 +494,7 @@ function bindEvents() {
 }
 
 initTheme();
+initExperience();
 buildCategories();
 updatePriceLabel();
 bindEvents();
