@@ -375,14 +375,26 @@ function initExperience() {
 
   document.querySelectorAll(".reveal").forEach((item) => revealObserver.observe(item));
 
+  let pointerFrame = 0;
+  let pendingPointer = null;
   els.productGrid.addEventListener("pointermove", (event) => {
     const card = event.target.closest(".product-card");
     if (!card) return;
     const rect = card.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width;
-    const y = (event.clientY - rect.top) / rect.height;
-    card.style.setProperty("--mx", x.toFixed(3));
-    card.style.setProperty("--my", y.toFixed(3));
+    pendingPointer = {
+      card,
+      x: (event.clientX - rect.left) / rect.width,
+      y: (event.clientY - rect.top) / rect.height
+    };
+    if (pointerFrame) return;
+    pointerFrame = requestAnimationFrame(() => {
+      if (pendingPointer) {
+        pendingPointer.card.style.setProperty("--mx", pendingPointer.x.toFixed(3));
+        pendingPointer.card.style.setProperty("--my", pendingPointer.y.toFixed(3));
+      }
+      pendingPointer = null;
+      pointerFrame = 0;
+    });
   });
 
   els.productGrid.addEventListener("pointerout", (event) => {
